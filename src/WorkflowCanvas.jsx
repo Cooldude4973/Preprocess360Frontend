@@ -1271,10 +1271,11 @@ const VisualizationNode = ({ data }) => (
 );
 
 const nodeTypes = {
-  data: { component: DataNode },
-  preprocess: { component: PreprocessNode },
-  visualize: { component: VisualizationNode },
+  data: DataNode,
+  preprocess: PreprocessNode,
+  visualize: VisualizationNode,
 };
+
 
 const WorkflowCanvas = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([
@@ -1291,12 +1292,12 @@ const WorkflowCanvas = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
-  const onNodeClick = (event, node) => {
+  const onNodeClick = (_, node) => {
     setSelectedNode(node);
     setSelectedEdge(null); // Deselect edge when a node is clicked
   };
 
-  const onEdgeClick = (event, edge) => {
+  const onEdgeClick = (_, edge) => {
     setSelectedEdge(edge);
     setSelectedNode(null); // Deselect node when an edge is clicked
   };
@@ -1339,6 +1340,7 @@ const WorkflowCanvas = () => {
 
     let label = '';
     switch (action) {
+
       case 'removeNullValues':
         label = 'Remove Null Values';
         break;
@@ -1376,14 +1378,14 @@ const WorkflowCanvas = () => {
             onClick={() => createNode('visualize', { x: 500, y: 100 }, 'Visualization Node')}
           >
             <ChartBar className="w-4 h-4 mr-2" />
-            Add Visualization
+            Visualization Tools
           </button>
           <button
             className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 w-full"
             onClick={toggleDropdown}
           >
             <Table className="w-4 h-4 mr-2" />
-            Preprocessing Tool
+            Preprocessing Tools
           </button>
 
           {dropdownVisible && (
@@ -1437,11 +1439,7 @@ const WorkflowCanvas = () => {
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
-            nodeTypes={{
-              data: nodeTypes.data.component,
-              preprocess: nodeTypes.preprocess.component,
-              visualize: nodeTypes.visualize.component,
-            }}
+            nodeTypes={nodeTypes}
             fitView
           >
             <Background gap={16} size={0.5} />
@@ -1482,4 +1480,5 @@ const WorkflowCanvas = () => {
 };
 
 export default WorkflowCanvas;
+
 

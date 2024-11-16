@@ -12,7 +12,7 @@ import 'reactflow/dist/style.css';
 import { Database, Table, ChartBar, Trash } from 'lucide-react';
 
 // Node Components
-const DataNode = ({ data }) => (
+const DataNode = () => (
   <div
     className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex flex-col items-center justify-center border-2 border-zinc-300"
     style={{
@@ -25,7 +25,7 @@ const DataNode = ({ data }) => (
   </div>
 );
 
-const PreprocessNode = ({ data }) => (
+const PreprocessNode = () => (
   <div
     className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex flex-col items-center justify-center border-2 border-zinc-300"
     style={{
@@ -38,7 +38,7 @@ const PreprocessNode = ({ data }) => (
   </div>
 );
 
-const VisualizationNode = ({ data }) => (
+const VisualizationNode = () => (
   <div
     className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex flex-col items-center justify-center border-2 border-zinc-300"
     style={{
@@ -52,9 +52,9 @@ const VisualizationNode = ({ data }) => (
 );
 
 const nodeTypes = {
-  data: { component: DataNode },
-  preprocess: { component: PreprocessNode },
-  visualize: { component: VisualizationNode },
+  data: DataNode,
+  preprocess: PreprocessNode,
+  visualize: VisualizationNode,
 };
 
 const WorkflowCanvas = () => {
@@ -62,32 +62,32 @@ const WorkflowCanvas = () => {
     {
       id: 'data-1',
       type: 'data',
-      data: { label: 'Data Node' },
       position: { x: 100, y: 100 },
     },
   ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
-  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
-  const onNodeClick = (event, node) => {
+
+  const onNodeClick = (_, node) => {
     setSelectedNode(node);
-    setSelectedEdge(null); // Deselect edge when a node is clicked
+    setSelectedEdge(null); // Deselect edge if a node is selected
   };
 
-  const onEdgeClick = (event, edge) => {
+  const onEdgeClick = (_, edge) => {
     setSelectedEdge(edge);
-    setSelectedNode(null); // Deselect node when an edge is clicked
+    setSelectedNode(null); // Deselect node if an edge is selected
   };
 
   const deleteSelectedNode = () => {
     if (selectedNode) {
-      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+      setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
       setEdges((eds) =>
         eds.filter(
-          (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
+          (edge) =>
+            edge.source !== selectedNode.id && edge.target !== selectedNode.id
         )
       );
       setSelectedNode(null);
@@ -101,43 +101,13 @@ const WorkflowCanvas = () => {
     }
   };
 
-  const createNode = (type, position, label) => {
+  const createNode = (type, position) => {
     const newNode = {
       id: `${type}-${nodes.length + 1}`,
       type,
-      data: { label },
       position,
     };
     setNodes((nds) => [...nds, newNode]);
-  };
-
-  const toggleDropdown = () => {
-    setDropdownVisible((prev) => !prev);
-  };
-
-
-  const handlePreprocessChange = (action) => {
-    setDropdownVisible(false);
-
-    let label = '';
-    switch (action) {
-      case 'removeNullValues':
-        label = 'Remove Null Values';
-        break;
-      case 'deleteOutliers':
-        label = 'Delete Outliers';
-        break;
-      case 'normalizeData':
-        label = 'Normalize Data';
-        break;
-      case 'standardizeData':
-        label = 'Standardize Data';
-        break;
-      default:
-        label = 'Preprocess Action';
-    }
-
-    createNode('preprocess', { x: 300, y: 100 }, label);
   };
 
   return (
@@ -147,66 +117,26 @@ const WorkflowCanvas = () => {
         <div className="w-1/4 p-4 bg-gray-100 border-r">
           <h3 className="font-bold text-lg mb-4">Tools</h3>
           <button
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 mb-2 w-full"
-            onClick={() => createNode('data', { x: 100, y: 100 }, 'Data Node')}
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2 w-full"
+            onClick={() => createNode('data', { x: 100, y: 100 })}
           >
             <Database className="w-4 h-4 mr-2" />
-            Add Data
+            Add Data Node
           </button>
           <button
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 mb-2 w-full"
-            onClick={() => createNode('visualize', { x: 500, y: 100 }, 'Visualization Node')}
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2 w-full"
+            onClick={() => createNode('visualize', { x: 500, y: 100 })}
           >
             <ChartBar className="w-4 h-4 mr-2" />
-            Add Visualization
+            Add Visualization Node
           </button>
           <button
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 w-full"
-            onClick={toggleDropdown}
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2 w-full"
+            onClick={() => createNode('preprocess', { x: 300, y: 100 })}
           >
             <Table className="w-4 h-4 mr-2" />
-            Preprocessing Tool
+            Add Preprocess Node
           </button>
-
-          {dropdownVisible && (
-            <div className="mt-4 bg-white shadow-lg rounded-lg border p-2">
-              <h3 className="font-medium mb-2">Select Preprocessing</h3>
-              <ul>
-                <li>
-                  <button
-                    className="w-full text-left p-2 hover:bg-gray-200"
-                    onClick={() => handlePreprocessChange('removeNullValues')}
-                  >
-                    Remove Null Values
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="w-full text-left p-2 hover:bg-gray-200"
-                    onClick={() => handlePreprocessChange('deleteOutliers')}
-                  >
-                    Delete Outliers
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="w-full text-left p-2 hover:bg-gray-200"
-                    onClick={() => handlePreprocessChange('normalizeData')}
-                  >
-                    Normalize Data
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="w-full text-left p-2 hover:bg-gray-200"
-                    onClick={() => handlePreprocessChange('standardizeData')}
-                  >
-                    Standardize Data
-                  </button>
-                </li>
-              </ul>
-            </div>
-          )}
         </div>
 
         {/* Canvas */}
@@ -219,11 +149,7 @@ const WorkflowCanvas = () => {
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
-            nodeTypes={{
-              data: nodeTypes.data.component,
-              preprocess: nodeTypes.preprocess.component,
-              visualize: nodeTypes.visualize.component,
-            }}
+            nodeTypes={nodeTypes}
             fitView
           >
             <Background gap={16} size={0.5} />
