@@ -6,49 +6,61 @@ import ReactFlow, {
   useEdgesState,
   Controls,
   Background,
-  Handle,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Database, Table, ChartBar, Trash } from 'lucide-react';
+import { Database, Table, ChartBar, Trash, Moon, Sun } from 'lucide-react';
 
 // Node Components
-const DataNode = () => (
-  <div
-    className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex flex-col items-center justify-center border-2 border-zinc-300"
-    style={{
-      background: 'radial-gradient(circle farthest-side, #FEDEB6 50%, #FEC27B)',
-    }}
-  >
-    <Handle type="target" position="left" style={{ background: '#555' }} />
-    <Database className="w-5 h-5" />
-    <Handle type="source" position="right" style={{ background: '#555' }} />
+const NodeWrapper = ({ children, label }) => (
+  <div className="flex flex-col items-center">
+    {children}
+    <span className="text-xs font-medium mt-2">{label}</span>
   </div>
 );
 
-const PreprocessNode = () => (
-  <div
-    className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex flex-col items-center justify-center border-2 border-zinc-300"
-    style={{
-      background: 'radial-gradient(circle farthest-side, #FEDEB6 50%, #FEC27B)',
-    }}
-  >
-    <Handle type="target" position="left" style={{ background: '#555' }} />
-    <Table className="w-5 h-5" />
-    <Handle type="source" position="right" style={{ background: '#555' }} />
-  </div>
+const DataNode = ({ data }) => (
+  <NodeWrapper label={data.label}>
+    <div
+      className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex items-center justify-center border-2 border-zinc-300"
+      style={{
+        background: 'radial-gradient(circle farthest-side, #FEDEB6 50%, #FEC27B)',
+      }}
+    >
+      <Handle type="target" position="left" style={{ background: '#555' }} />
+      <Database className="w-5 h-5" />
+      <Handle type="source" position="right" style={{ background: '#555' }} />
+    </div>
+  </NodeWrapper>
 );
 
-const VisualizationNode = () => (
-  <div
-    className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex flex-col items-center justify-center border-2 border-zinc-300"
-    style={{
-      background: 'radial-gradient(circle farthest-side, #FEDEB6 50%, #FEC27B)',
-    }}
-  >
-    <Handle type="target" position="left" style={{ background: '#555' }} />
-    <ChartBar className="w-5 h-5" />
-    <Handle type="source" position="right" style={{ background: '#555' }} />
-  </div>
+const PreprocessNode = ({ data }) => (
+  <NodeWrapper label={data.label}>
+    <div
+      className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex items-center justify-center border-2 border-zinc-300"
+      style={{
+        background: 'radial-gradient(circle farthest-side, #FEDEB6 50%, #FEC27B)',
+      }}
+    >
+      <Handle type="target" position="left" style={{ background: '#555' }} />
+      <Table className="w-5 h-5" />
+      <Handle type="source" position="right" style={{ background: '#555' }} />
+    </div>
+  </NodeWrapper>
+);
+
+const VisualizationNode = ({ data }) => (
+  <NodeWrapper label={data.label}>
+    <div
+      className="bg-white p-3 rounded-full shadow-sm w-10 h-10 flex items-center justify-center border-2 border-zinc-300"
+      style={{
+        background: 'radial-gradient(circle farthest-side, #FEDEB6 50%, #FEC27B)',
+      }}
+    >
+      <Handle type="target" position="left" style={{ background: '#555' }} />
+      <ChartBar className="w-5 h-5" />
+      <Handle type="source" position="right" style={{ background: '#555' }} />
+    </div>
+  </NodeWrapper>
 );
 
 const nodeTypes = {
@@ -62,32 +74,34 @@ const WorkflowCanvas = () => {
     {
       id: 'data-1',
       type: 'data',
+      data: { label: 'Data Node' },
       position: { x: 100, y: 100 },
     },
   ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [visualizationDropdownVisible, setVisualizationDropdownVisible] = useState(false); // Visualization dropdown state
+  const [darkMode, setDarkMode] = useState(false); // Dark mode state
 
   const onConnect = (params) => setEdges((eds) => addEdge(params, eds));
-
   const onNodeClick = (_, node) => {
     setSelectedNode(node);
-    setSelectedEdge(null); // Deselect edge if a node is selected
+    setSelectedEdge(null); // Deselect edge when a node is clicked
   };
 
   const onEdgeClick = (_, edge) => {
     setSelectedEdge(edge);
-    setSelectedNode(null); // Deselect node if an edge is selected
+    setSelectedNode(null); // Deselect node when an edge is clicked
   };
 
   const deleteSelectedNode = () => {
     if (selectedNode) {
-      setNodes((nds) => nds.filter((node) => node.id !== selectedNode.id));
+      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
       setEdges((eds) =>
         eds.filter(
-          (edge) =>
-            edge.source !== selectedNode.id && edge.target !== selectedNode.id
+          (edge) => edge.source !== selectedNode.id && edge.target !== selectedNode.id
         )
       );
       setSelectedNode(null);
@@ -101,41 +115,76 @@ const WorkflowCanvas = () => {
     }
   };
 
-  const createNode = (type, position) => {
+  const createNode = (type, position, label) => {
     const newNode = {
       id: `${type}-${nodes.length + 1}`,
       type,
+      data: { label },
       position,
     };
     setNodes((nds) => [...nds, newNode]);
   };
 
+  const toggleDropdown = () => {
+    setDropdownVisible((prev) => !prev);
+  };
+
+  const toggleVisualizationDropdown = () => {
+    setVisualizationDropdownVisible((prev) => !prev); // Toggle visibility of visualization tools dropdown
+  };
+
+  const handlePreprocessChange = (action) => {
+    setDropdownVisible(false);
+
+    let label = '';
+    switch (action) {
+      case 'removeNullValues':
+        label = 'Remove Null Values';
+        break;
+      case 'deleteOutliers':
+        label = 'Delete Outliers';
+        break;
+      case 'normalizeData':
+        label = 'Normalize Data';
+        break;
+      case 'standardizeData':
+        label = 'Standardize Data';
+        break;
+      default:
+        label = 'Preprocess Action';
+    }
+
+    createNode('preprocess', { x: 300, y: 100 }, label);
+  };
+
   return (
     <ReactFlowProvider>
-      <div className="flex h-screen">
+      <div
+        className={`flex h-screen ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-black'}`} // Apply dark mode class conditionally
+      >
         {/* Sidebar */}
-        <div className="w-1/4 p-4 bg-gray-100 border-r">
+        <div className="w-1/4 p-4 border-r">
           <h3 className="font-bold text-lg mb-4">Tools</h3>
           <button
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2 w-full"
-            onClick={() => createNode('data', { x: 100, y: 100 })}
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 mb-2 w-full"
+            onClick={() => createNode('data', { x: 100, y: 100 }, 'Data Node')}
           >
             <Database className="w-4 h-4 mr-2" />
-            Add Data Node
+            Add Data
           </button>
           <button
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2 w-full"
-            onClick={() => createNode('visualize', { x: 500, y: 100 })}
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 mb-2 w-full"
+            onClick={toggleVisualizationDropdown} // Open visualization dropdown on click
           >
             <ChartBar className="w-4 h-4 mr-2" />
-            Add Visualization Node
+            Visualization Tools
           </button>
           <button
-            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 mb-2 w-full"
-            onClick={() => createNode('preprocess', { x: 300, y: 100 })}
+            className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-blue-600 w-full"
+            onClick={toggleDropdown}
           >
             <Table className="w-4 h-4 mr-2" />
-            Add Preprocess Node
+            Preprocessing Tools
           </button>
         </div>
 
@@ -144,40 +193,38 @@ const WorkflowCanvas = () => {
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            nodeTypes={nodeTypes}
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
-            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
             fitView
           >
-            <Background gap={16} size={0.5} />
             <Controls />
+            <Background />
           </ReactFlow>
+          
+          {/* Dark Mode Toggle - Top Right */}
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full bg-gray-500 text-white"
+            onClick={() => setDarkMode(!darkMode)} // Toggle dark mode
+          >
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
 
-          {/* Delete Buttons */}
-          <div className="absolute bottom-4 right-4 space-y-2">
+          {/* Delete Node and Edge - Bottom Right */}
+          <div className="absolute bottom-4 right-4 flex flex-col space-y-2">
             <button
-              onClick={deleteSelectedNode}
-              disabled={!selectedNode}
-              className={`flex items-center px-4 py-2 rounded-lg ${
-                selectedNode
-                  ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              onClick={deleteSelectedNode} // Delete selected node
             >
               <Trash className="w-4 h-4 mr-2" />
               Delete Node
             </button>
             <button
-              onClick={deleteSelectedEdge}
-              disabled={!selectedEdge}
-              className={`flex items-center px-4 py-2 rounded-lg ${
-                selectedEdge
-                  ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              onClick={deleteSelectedEdge} // Delete selected edge
             >
               <Trash className="w-4 h-4 mr-2" />
               Delete Edge
